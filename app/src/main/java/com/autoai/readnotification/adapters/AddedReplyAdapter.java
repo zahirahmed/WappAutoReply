@@ -3,9 +3,6 @@ package com.autoai.readnotification.adapters;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.CardView;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,13 +19,19 @@ import org.w3c.dom.Text;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
+
 public class AddedReplyAdapter extends RecyclerView.Adapter<AddedReplyAdapter.MyViewHolder>{
 
     ArrayList<RepliesData> arrayList;
+    ArrayList<RepliesData> contactsList;
     Context context;
 
-    public AddedReplyAdapter(ArrayList<RepliesData> arrayList, Context context) {
+    public AddedReplyAdapter(ArrayList<RepliesData> arrayList,ArrayList<RepliesData> contactsList, Context context) {
         this.arrayList = arrayList;
+        this.contactsList = contactsList;
         this.context = context;
     }
 
@@ -46,8 +49,8 @@ public class AddedReplyAdapter extends RecyclerView.Adapter<AddedReplyAdapter.My
 
         final RepliesData repliesData=arrayList.get(i);
 
-        myViewHolder.txt_name.setText("Name : "+repliesData.getName());
-        myViewHolder.txt_number.setText("Phone : "+repliesData.getNumber());
+        myViewHolder.txt_name.setText(""+repliesData.getName());
+        myViewHolder.txt_number.setText(""+repliesData.getNumber());
 
         myViewHolder.main.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -64,7 +67,12 @@ public class AddedReplyAdapter extends RecyclerView.Adapter<AddedReplyAdapter.My
                     @Override
                     public void onClick(View v) {
                         arrayList.get(i).setMessage(txt_msg.getText().toString());
-                        addReply(arrayList);
+                        for(int j=0;j<contactsList.size();j++){
+                            if(contactsList.get(j).getNumber().equalsIgnoreCase(arrayList.get(i).getNumber())){
+                                contactsList.get(j).setMessage(txt_msg.getText().toString());
+                            }
+                        }
+                        addReply(contactsList);
                         dialog.dismiss();
                     }
                 });

@@ -9,12 +9,8 @@ import android.database.Cursor;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.provider.Settings;
-import android.support.annotation.RequiresApi;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
+
 import android.os.Bundle;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -23,9 +19,24 @@ import android.widget.EditText;
 
 import com.autoai.readnotification.adapters.AddedReplyAdapter;
 import com.autoai.readnotification.models.RepliesData;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.MultiplePermissionsReport;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionDeniedResponse;
+import com.karumi.dexter.listener.PermissionGrantedResponse;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
+import com.karumi.dexter.listener.single.PermissionListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,8 +55,6 @@ public class MainActivity extends AppCompatActivity {
 
         startService(new Intent(this, NotificationCollectorMonitorService.class));
 
-        ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_CONTACTS,Manifest.permission.WRITE_CONTACTS},1);
-
         Button button = findViewById(R.id.button);
         Button button2 = findViewById(R.id.button2);
         Button button3 = findViewById(R.id.button3);
@@ -63,7 +72,20 @@ public class MainActivity extends AppCompatActivity {
                     addedReplyAdapter.addReply(ed_name.getText().toString(),ed_message.getText().toString());
                 }*/
 
-                startActivity(new Intent(MainActivity.this,ContactsActivity.class));
+                Dexter.withActivity(MainActivity.this)
+                        .withPermissions(Manifest.permission.READ_CONTACTS,Manifest.permission.WRITE_CONTACTS)
+                        .withListener(new MultiplePermissionsListener() {
+                            @Override
+                            public void onPermissionsChecked(MultiplePermissionsReport report) {
+                                startActivity(new Intent(MainActivity.this,ContactsActivity.class));
+                            }
+
+                            @Override
+                            public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
+
+                            }
+                        }).check();
+
             }
         });
 
@@ -96,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        getContactList();
+        //getContactList();
 
     }
 
@@ -117,7 +139,14 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        addedReplyAdapter=new AddedReplyAdapter(arrayList,this);
+        ArrayList<RepliesData> selectedList =new ArrayList<>();
+        for(int i=0;i<arrayList.size();i++){
+            if(arrayList.get(i).isAdded()){
+                selectedList.add(arrayList.get(i));
+            }
+        }
+
+        addedReplyAdapter=new AddedReplyAdapter(selectedList,arrayList,this);
 
         rc_added.setAdapter(addedReplyAdapter);
 

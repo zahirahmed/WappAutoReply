@@ -2,16 +2,16 @@ package com.autoai.readnotification;
 
 import android.Manifest;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.Image;
+import android.net.Uri;
 import android.provider.ContactsContract;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,18 +20,26 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.autoai.readnotification.models.RepliesData;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class ContactsActivity extends AppCompatActivity {
 
     RecyclerView rc_contacts;
     ImageView done;
     ArrayList<RepliesData> contactList=new ArrayList<>();
-    ArrayList<RepliesData> arrayList;
+    ArrayList<RepliesData> selectedList=new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,17 +52,37 @@ public class ContactsActivity extends AppCompatActivity {
 
         getContactList();
 
+        done.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // save the task list to preference
+                for(int i=0;i<contactList.size();i++){
+                    Log.d("werwertyu",i+" added "+contactList.get(i).isAdded()+"");
+                }
+                SharedPreferences prefs = getSharedPreferences("AutoReply", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+                try {
+                    editor.putString("added_list", ObjectSerializer.serialize(contactList));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                Log.i("sizeeeeeee", "sizeeeeeee 3: " + contactList.size());
+                editor.apply();
+                finish();
+            }
+        });
+
+
     }
 
 
     public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.MyViewHolder>{
 
-        ArrayList<RepliesData> arrayList;
-        ArrayList<RepliesData> arrayList2=new ArrayList<>();
         Context context;
 
-        public ContactsAdapter(ArrayList<RepliesData> arrayList, Context context) {
-            this.arrayList = arrayList;
+        public ContactsAdapter(Context context) {
+
             this.context = context;
         }
 
@@ -68,32 +96,42 @@ public class ContactsActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onBindViewHolder(@NonNull ContactsAdapter.MyViewHolder myViewHolder, int i) {
+        public void onBindViewHolder(@NonNull final ContactsAdapter.MyViewHolder myViewHolder, final int i) {
 
-            final RepliesData repliesData=arrayList.get(i);
+            final RepliesData repliesData=contactList.get(i);
 
-            myViewHolder.txt_name.setText("Name : "+repliesData.getName());
-            myViewHolder.txt_number.setText("Phone : "+repliesData.getNumber());
+            //myViewHolder.img.setImageBitmap(repliesData.getPhoto());
+
+
+            Log.d("wertwerwe",repliesData.isAdded()+"");
+            myViewHolder.txt_name.setText(""+repliesData.getName());
+            myViewHolder.txt_number.setText(""+repliesData.getNumber());
+
+            myViewHolder.cb.setOnCheckedChangeListener(null);
 
             myViewHolder.cb.setChecked(repliesData.isAdded());
+
+            myViewHolder.main.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(!myViewHolder.cb.isChecked()){
+                        myViewHolder.cb.setChecked(true);
+
+                    }
+                    else
+                    {
+                        myViewHolder.cb.setChecked(false);
+                    }
+                }
+            });
 
             myViewHolder.cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    if(isChecked){
-                        arrayList2.add(repliesData);
-                    }
-                    else {
-                        arrayList2.remove(repliesData);
-                    }
 
-                    done.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            addReply(arrayList2);
-                            finish();
-                        }
-                    });
+                        repliesData.setAdded(isChecked);
+
+                        Log.d("werwertyu",i+" added "+repliesData.isAdded()+"");
 
                 }
             });
@@ -102,16 +140,20 @@ public class ContactsActivity extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return arrayList.size();
+            return contactList.size();
         }
 
         public class MyViewHolder extends RecyclerView.ViewHolder {
 
             TextView txt_name,txt_number;
             CheckBox cb;
+            CardView main;
+            ImageView img;
 
             public MyViewHolder(@NonNull View itemView) {
                 super(itemView);
+                main=itemView.findViewById(R.id.main);
+                img=itemView.findViewById(R.id.img);
                 txt_name=itemView.findViewById(R.id.txt_name);
                 txt_number=itemView.findViewById(R.id.txt_number);
                 cb=itemView.findViewById(R.id.cb);
@@ -119,7 +161,7 @@ public class ContactsActivity extends AppCompatActivity {
             }
         }
 
-        public void addReply(ArrayList<RepliesData> arrayList){
+        public void addContact(ArrayList<RepliesData> arrayList){
         /*if (null == arrayList) {
             arrayList = new ArrayList<>();
         }
@@ -129,11 +171,12 @@ public class ContactsActivity extends AppCompatActivity {
             SharedPreferences prefs = context.getSharedPreferences("AutoReply", Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             try {
-                editor.putString("added_list", ObjectSerializer.serialize(arrayList));
+                editor.putString("added_list", ObjectSerializer.serialize(contactList));
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            editor.commit();
+            Log.i("sizeeeeeee", "sizeeeeeee 3: " + contactList.size());
+            editor.apply();
             //notifyDataSetChanged();
 
         }
@@ -147,19 +190,18 @@ public class ContactsActivity extends AppCompatActivity {
                 null, null, null, null);
 
 
-        if (null == arrayList) {
-            arrayList = new ArrayList<>();
+        if (null == selectedList) {
+            selectedList = new ArrayList<>();
         }
 
         // load tasks from preference
         SharedPreferences prefs = getSharedPreferences("AutoReply", Context.MODE_PRIVATE);
 
         try {
-            arrayList = (ArrayList<RepliesData>) ObjectSerializer.deserialize(prefs.getString("added_list", ObjectSerializer.serialize(new ArrayList<RepliesData>())));
+            selectedList = (ArrayList<RepliesData>) ObjectSerializer.deserialize(prefs.getString("added_list", ObjectSerializer.serialize(new ArrayList<RepliesData>())));
         } catch (IOException e) {
             e.printStackTrace();
         }
-
 
         if ((cur != null ? cur.getCount() : 0) > 0) {
             while (cur != null && cur.moveToNext()) {
@@ -179,26 +221,23 @@ public class ContactsActivity extends AppCompatActivity {
                     while (pCur.moveToNext()) {
                         String phoneNo = pCur.getString(pCur.getColumnIndex(
                                 ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        //retrieveContactPhoto(this,phoneNo);
                         Log.i("contcxxx", "id: " + id);
                         Log.i("contcxxx", "Name: " + name);
-                        Log.i("contcxxx", "Phone Number: " + phoneNo);
-
-                        RepliesData repliesData = null;
-                        repliesData=new RepliesData(id,name,phoneNo,"Hey there!",false);
-                        for(int i=0;i<arrayList.size();i++){
-                            if(arrayList.get(i).getNumber().equalsIgnoreCase(phoneNo)){
-                                repliesData=new RepliesData(id,name,phoneNo,"Hey there!",true);
-                            }
-                            else
-                            {
-                            }
-                        }
+                        RepliesData repliesData=new RepliesData(id,name,phoneNo,"Hey there!");
 
                         contactList.add(repliesData);
+                    }
 
-                        rc_contacts.setAdapter(new ContactsAdapter(contactList,this));
+                    if(contactList.size()>0 && selectedList.size()>0){
+                        for(int i=0;i<contactList.size();i++){
+                            contactList.get(i).setAdded(selectedList.get(i).isAdded());
+                        }
 
                     }
+
+                    rc_contacts.setAdapter(new ContactsAdapter(this));
+
                     pCur.close();
                 }
             }
@@ -207,4 +246,49 @@ public class ContactsActivity extends AppCompatActivity {
             cur.close();
         }
     }
+
+    public static Bitmap retrieveContactPhoto(Context context, String number) {
+        ContentResolver contentResolver = context.getContentResolver();
+        String contactId = null;
+        Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
+
+        String[] projection = new String[]{ContactsContract.PhoneLookup.DISPLAY_NAME, ContactsContract.PhoneLookup._ID};
+
+        Cursor cursor =
+                contentResolver.query(
+                        uri,
+                        projection,
+                        null,
+                        null,
+                        null);
+
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                contactId = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.PhoneLookup._ID));
+            }
+            cursor.close();
+        }
+
+        Bitmap photo = BitmapFactory.decodeResource(context.getResources(),
+                R.drawable.ic_user);
+
+        try {
+            InputStream inputStream = ContactsContract.Contacts.openContactPhotoInputStream(context.getContentResolver(),
+                    ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, new Long(contactId)));
+
+            if (inputStream != null) {
+                photo = BitmapFactory.decodeStream(inputStream);
+            }
+
+            assert inputStream != null;
+            if (inputStream != null)
+            inputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return photo;
+    }
+
+
 }

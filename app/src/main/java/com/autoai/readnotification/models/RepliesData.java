@@ -1,9 +1,12 @@
 package com.autoai.readnotification.models;
 
+import android.graphics.Bitmap;
+
 import java.io.Serializable;
 
 public class RepliesData implements Serializable {
     String id,name,number,message;
+    Bitmap photo;
     boolean isAdded;
 
     public RepliesData(String id, String name, String number, String message) {
@@ -27,6 +30,14 @@ public class RepliesData implements Serializable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Bitmap getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(Bitmap photo) {
+        this.photo = photo;
     }
 
     public String getName() {

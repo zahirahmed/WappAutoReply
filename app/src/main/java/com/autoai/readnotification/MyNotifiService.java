@@ -15,7 +15,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import android.support.v4.app.RemoteInput;
 import android.util.Log;
 import android.widget.Toast;
 

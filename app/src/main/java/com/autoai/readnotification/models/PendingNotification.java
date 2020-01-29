@@ -2,12 +2,13 @@ package com.autoai.readnotification.models;
 
 import android.annotation.SuppressLint;
 import android.service.notification.StatusBarNotification;
-import android.support.v4.app.NotificationCompat;
 
 
 import com.autoai.readnotification.VersionUtils;
 
 import java.util.concurrent.ScheduledFuture;
+
+import androidx.core.app.NotificationCompat;
 
 /**
  * Created by JJ on 05/06/15.
