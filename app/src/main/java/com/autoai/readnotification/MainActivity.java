@@ -16,6 +16,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.autoai.readnotification.adapters.AddedReplyAdapter;
 import com.autoai.readnotification.models.RepliesData;
@@ -56,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
         startService(new Intent(this, NotificationCollectorMonitorService.class));
 
         Button button = findViewById(R.id.button);
-        Button button2 = findViewById(R.id.button2);
+        ImageView button2 = findViewById(R.id.button2);
         Button button3 = findViewById(R.id.button3);
 
         rc_added = findViewById(R.id.rc_added);
@@ -72,19 +74,28 @@ public class MainActivity extends AppCompatActivity {
                     addedReplyAdapter.addReply(ed_name.getText().toString(),ed_message.getText().toString());
                 }*/
 
-                Dexter.withActivity(MainActivity.this)
-                        .withPermissions(Manifest.permission.READ_CONTACTS,Manifest.permission.WRITE_CONTACTS)
-                        .withListener(new MultiplePermissionsListener() {
-                            @Override
-                            public void onPermissionsChecked(MultiplePermissionsReport report) {
-                                startActivity(new Intent(MainActivity.this,ContactsActivity.class));
-                            }
+                if (Settings.Secure.getString(getContentResolver(),"enabled_notification_listeners").contains(getApplicationContext().getPackageName()))
+                {
+                    //service is enabled do something
+                    Dexter.withActivity(MainActivity.this)
+                            .withPermissions(Manifest.permission.READ_CONTACTS,Manifest.permission.WRITE_CONTACTS)
+                            .withListener(new MultiplePermissionsListener() {
+                                @Override
+                                public void onPermissionsChecked(MultiplePermissionsReport report) {
+                                    startActivity(new Intent(MainActivity.this,ContactsActivity.class));
+                                }
 
-                            @Override
-                            public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
+                                @Override
+                                public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
 
-                            }
-                        }).check();
+                                }
+                            }).check();
+
+                } else {
+                    //service is not enabled try to enabled by calling...
+                    startActivityForResult(new Intent(
+                            "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"),1);
+                }
 
             }
         });
@@ -189,5 +200,22 @@ public class MainActivity extends AppCompatActivity {
         if(cur!=null){
             cur.close();
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(resultCode==RESULT_OK){
+
+            if(requestCode==1){
+
+            }
+        }
+        else
+        {
+
+        }
+
     }
 }

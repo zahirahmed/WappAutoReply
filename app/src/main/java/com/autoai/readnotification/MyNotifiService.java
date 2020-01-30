@@ -83,7 +83,7 @@ public class MyNotifiService extends NotificationListenerService {
             e.printStackTrace();
         }
 
-        Log.d("whereree","dfgdfgdf");
+        Log.d("wherereesss","dfgdfgdf size "+arrayList.size());
 
         String pack = sbn.getPackageName();
         if (pack.equals("com.whatsapp") || pack.equals("com.whatsapp.w4b")) {
@@ -114,8 +114,9 @@ public class MyNotifiService extends NotificationListenerService {
 
                                 for(int i=0;i<arrayList.size();i++){
                                     if(title.equalsIgnoreCase(arrayList.get(i).getName())){
-                                        action.sendReply(getApplicationContext(), arrayList.get(i).getMessage()+"");
-
+                                        if(arrayList.get(i).isAdded() ){
+                                            action.sendReply(getApplicationContext(), arrayList.get(i).getMessage()+"");
+                                        }
                                     }
                                 }
 

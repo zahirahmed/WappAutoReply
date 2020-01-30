@@ -56,9 +56,7 @@ public class ContactsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // save the task list to preference
-                for(int i=0;i<contactList.size();i++){
-                    Log.d("werwertyu",i+" added "+contactList.get(i).isAdded()+"");
-                }
+
                 SharedPreferences prefs = getSharedPreferences("AutoReply", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = prefs.edit();
                 try {
@@ -67,7 +65,6 @@ public class ContactsActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-                Log.i("sizeeeeeee", "sizeeeeeee 3: " + contactList.size());
                 editor.apply();
                 finish();
             }
@@ -175,7 +172,6 @@ public class ContactsActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            Log.i("sizeeeeeee", "sizeeeeeee 3: " + contactList.size());
             editor.apply();
             //notifyDataSetChanged();
 
@@ -229,11 +225,15 @@ public class ContactsActivity extends AppCompatActivity {
                         contactList.add(repliesData);
                     }
 
-                    if(contactList.size()>0 && selectedList.size()>0){
-                        for(int i=0;i<contactList.size();i++){
-                            contactList.get(i).setAdded(selectedList.get(i).isAdded());
-                        }
 
+                    if(contactList.size()==selectedList.size()){
+                        if(contactList.size()>0 && selectedList.size()>0){
+                            for(int i=0;i<contactList.size();i++){
+                                contactList.get(i).setAdded(selectedList.get(i).isAdded());
+                                contactList.get(i).setMessage(selectedList.get(i).getMessage());
+                            }
+
+                        }
                     }
 
                     rc_contacts.setAdapter(new ContactsAdapter(this));
@@ -245,6 +245,7 @@ public class ContactsActivity extends AppCompatActivity {
         if(cur!=null){
             cur.close();
         }
+
     }
 
     public static Bitmap retrieveContactPhoto(Context context, String number) {
